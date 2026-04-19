@@ -1,41 +1,60 @@
 pipeline {
     agent any
 
-    stages {
+    environment {
+        GIT_REPO_URL = 'https://github.com/calvinjohnplacio/cicd.git'
+        GIT_CREDENTIALS_ID = 'github-token' // Your GitHub token credentials ID
+    }
 
+    stages {
         stage('Clone Repo (GitHub Token)') {
             steps {
-                git credentialsId: 'github-token',
-                    url: 'https://github.com/calvinjohnplacio/cicd.git'
+                script {
+                    // Cloning the repo with GitHub credentials
+                    git credentialsId: "${env.GIT_CREDENTIALS_ID}", url: "${env.GIT_REPO_URL}"
+                }
             }
         }
 
         stage('Setup Python Environment') {
             steps {
-                sh '''
-                python3 -m venv venv
-                . venv/bin/activate
-                pip install --upgrade pip
-                pip install -r requirements.txt
-                '''
+                script {
+                    // Create and activate virtual environment
+                    sh '''
+                    # Check Python installation
+                    python3 --version
+
+                    # Create virtual environment and install dependencies
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                    '''
+                }
             }
         }
 
         stage('Run Selenium Test') {
             steps {
-                sh '''
-                . venv/bin/activate
-                python test.py
-                '''
+                script {
+                    // Activate the virtual environment and run the tests
+                    sh '''
+                    . venv/bin/activate
+                    python test.py
+                    '''
+                }
             }
         }
 
         stage('Deploy to Apache') {
             steps {
-                sh '''
-                sudo cp index.html /var/www/html/index.html
-                sudo chown www-data:www-data /var/www/html/index.html
-                '''
+                script {
+                    // Deploy to Apache and handle permissions
+                    sh '''
+                    sudo cp index.html /var/www/html/index.html
+                    sudo chown www-data:www-data /var/www/html/index.html
+                    '''
+                }
             }
         }
     }
