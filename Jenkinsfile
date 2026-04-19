@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         GIT_REPO_URL = 'https://github.com/calvinjohnplacio/cicd.git'
-        GIT_CREDENTIALS_ID = 'github-token' // Your GitHub token credentials ID
+        GIT_CREDENTIALS_ID = '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' // Your GitHub token credentials ID
     }
 
     stages {
