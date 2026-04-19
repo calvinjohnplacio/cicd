@@ -51,6 +51,7 @@ pipeline {
             steps {
                 script {
                     // Deploy to Apache and handle permissions
+                    // Ensure that sudo is passwordless for Jenkins user in the sudoers file
                     sh '''
                     sudo cp index.html /var/www/html/index.html
                     sudo chown www-data:www-data /var/www/html/index.html
