@@ -3,15 +3,20 @@ pipeline {
 
     environment {
         GIT_REPO_URL = 'https://github.com/calvinjohnplacio/cicd.git'
-        GIT_CREDENTIALS_ID = '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' // Your GitHub token credentials ID
+        GIT_CREDENTIALS_ID = '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'  // Correct credential ID
+        GIT_BRANCH = 'main'  // Explicitly setting branch to 'main'
     }
 
     stages {
-        stage('Clone Repo (GitHub Token)') {
+        stage('Checkout SCM') {
             steps {
                 script {
-                    // Cloning the repo with GitHub credentials
-                    git credentialsId: "${env.GIT_CREDENTIALS_ID}", url: "${env.GIT_REPO_URL}"
+                    // Checkout the correct branch (main)
+                    checkout scm: [
+                        $class: 'GitSCM',
+                        branches: [[name: "refs/heads/${env.GIT_BRANCH}"]],
+                        userRemoteConfigs: [[url: "${env.GIT_REPO_URL}", credentialsId: "${env.GIT_CREDENTIALS_ID}"]]
+                    ]
                 }
             }
         }
@@ -21,10 +26,6 @@ pipeline {
                 script {
                     // Create and activate virtual environment
                     sh '''
-                    # Check Python installation
-                    python3 --version
-
-                    # Create virtual environment and install dependencies
                     python3 -m venv venv
                     . venv/bin/activate
                     pip install --upgrade pip
