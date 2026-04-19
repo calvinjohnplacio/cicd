@@ -16,8 +16,9 @@ options.add_argument("--remote-debugging-port=9222")
 options.add_argument("--disable-gpu")
 options.add_argument("--disable-software-rasterizer")
 
-# Use webdriver-manager to handle ChromeDriver installation without passing options twice
-driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+# Use webdriver-manager to handle ChromeDriver installation
+driver_path = ChromeDriverManager().install()  # Install and get the path of the chromedriver
+driver = webdriver.Chrome(executable_path=driver_path, options=options)  # Use this path
 
 try:
     # Open the local file
