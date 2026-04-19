@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager  # Import WebDriver Manager
 import time
 
 # Setup Chrome options
@@ -14,9 +15,10 @@ options.add_argument("--remote-debugging-port=9222")  # Useful if you need to de
 options.add_argument("--disable-gpu")  # Disable GPU acceleration in headless mode
 options.add_argument("--disable-software-rasterizer")  # Disable software rasterizer
 
-# Initialize the WebDriver
+# Initialize the WebDriver using WebDriver Manager
 try:
-    driver = webdriver.Chrome(options=options)
+    # Use WebDriver Manager to automatically download the correct chromedriver version
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
     # Open the local file
     driver.get("file://" + "/var/lib/jenkins/workspace/simple-ci-cd/index.html")
