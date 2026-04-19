@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager  # Automatically install chromedriver
@@ -18,11 +19,16 @@ options.add_argument("--disable-software-rasterizer")
 
 # Use webdriver-manager to handle ChromeDriver installation
 driver_path = ChromeDriverManager().install()  # Install and get the path of the chromedriver
-driver = webdriver.Chrome(executable_path=driver_path, options=options)  # Use this path
+
+# Use the Service class to pass the driver path
+service = Service(executable_path=driver_path)
+
+# Create the WebDriver instance with the Service and options
+driver = webdriver.Chrome(service=service, options=options)  # Use the Service to pass the executable path
 
 try:
     # Open the local file
-    driver.get("file://" + "/var/lib/jenkins/workspace/dv/index.html")
+    driver.get("file://" + "/var/www/html/index.html")
 
     # Wait for the element to be visible
     WebDriverWait(driver, 10).until(
