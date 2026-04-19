@@ -3,21 +3,22 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager  # Automatically install chromedriver
+
 import time
 
-# Setup Chrome options
+# Set up Chrome options
 options = Options()
-options.add_argument("--headless")  # Required for Jenkins (headless mode)
-options.add_argument("--no-sandbox")  # Disable sandboxing (required in CI environments)
-options.add_argument("--disable-dev-shm-usage")  # Fixes issue with limited shared memory in Docker/CI environments
-options.add_argument("--remote-debugging-port=9222")  # Useful if you need to debug the browser
-options.add_argument("--disable-gpu")  # Disable GPU acceleration in headless mode
-options.add_argument("--disable-software-rasterizer")  # Disable software rasterizer
+options.add_argument("--headless")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--remote-debugging-port=9222")
+options.add_argument("--disable-gpu")
+options.add_argument("--disable-software-rasterizer")
 
-# Initialize the WebDriver correctly
 try:
-    # Ensure you are passing options correctly
-    driver = webdriver.Chrome(options=options)  # Pass options as a keyword argument here
+    # Use webdriver-manager to handle ChromeDriver installation
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
     # Open the local file
     driver.get("file://" + "/var/lib/jenkins/workspace/simple-ci-cd/index.html")
@@ -39,8 +40,4 @@ except Exception as e:
     print(f"Test Failed: {e}")
 
 finally:
-    # Quit the driver to close the browser session
-    try:
-        driver.quit()
-    except NameError:
-        print("Driver was not initialized properly.")
+    driver.quit()
