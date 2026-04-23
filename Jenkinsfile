@@ -3,82 +3,98 @@ pipeline {
 
     environment {
         GIT_REPO_URL = 'https://github.com/calvinjohnplacio/cicd.git'
-        GIT_CREDENTIALS_ID = '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'  // Correct credential ID
-        GIT_BRANCH = 'main'  // Explicitly setting branch to 'main'
+        GIT_CREDENTIALS_ID = 'github-pat'   // ✔ Use Jenkins credentials, NOT raw PAT
+        GIT_BRANCH = 'main'
+    }
+
+    options {
+        skipDefaultCheckout(true)
     }
 
     stages {
+
         stage('Checkout SCM') {
             steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "*/${env.GIT_BRANCH}"]],
+                    userRemoteConfigs: [[
+                        url: "${env.GIT_REPO_URL}",
+                        credentialsId: "${env.GIT_CREDENTIALS_ID}"
+                    ]]
+                ])
+            }
+        }
+
+        stage('Detect Changes') {
+            steps {
                 script {
-                    // Checkout the correct branch (main)
-                    checkout scm: [
-                        $class: 'GitSCM',
-                        branches: [[name: "refs/heads/${env.GIT_BRANCH}"]],
-                        userRemoteConfigs: [[url: "${env.GIT_REPO_URL}", credentialsId: "${env.GIT_CREDENTIALS_ID}"]]
-                    ]
+                    def changes = sh(
+                        script: "git diff --name-only HEAD~1 HEAD || true",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Changed files:\n${changes}"
+
+                    env.HAS_PHP_CHANGES = changes =~ /.*\\.php/
+                    env.HAS_TEST_CHANGES = changes =~ /(test\\.py|requirements\\.txt)/
                 }
             }
         }
 
         stage('Setup Python Environment') {
+            when {
+                expression { return env.HAS_TEST_CHANGES }
+            }
             steps {
-                script {
-                    // Create and activate virtual environment
-                    sh '''
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
-                    '''
-                }
+                sh '''
+                python3 -m venv venv
+                . venv/bin/activate
+                pip install --upgrade pip
+                pip install -r requirements.txt
+                '''
             }
         }
 
-        stage('Run Selenium Test') {
+        stage('Run Selenium Tests') {
+            when {
+                expression { return env.HAS_TEST_CHANGES }
+            }
             steps {
-                script {
-                    // Activate the virtual environment and run the tests
-                    sh '''
-                    . venv/bin/activate
-                    python test.py
-                    '''
-                }
+                sh '''
+                . venv/bin/activate
+                python test.py
+                '''
             }
         }
 
-<<<<<<< HEAD
-        stage('Deploy Changed PHP Files') {
-=======
-     stage('Deploy Changed PHP Files') {
->>>>>>> 54ce08c (all files push)
-    when {
-        changeset "**/*.php"
-    }
-    steps {
-        script {
-            def changedFiles = sh(
-                script: "git diff --name-only HEAD~1 HEAD | grep '.php' || true",
-                returnStdout: true
-            ).trim()
-
-            for (file in changedFiles.split("\n")) {
-                sh """
-                sudo cp ${file} /var/www/html/${file}
-                """
+        stage('Deploy to Apache') {
+            when {
+                changeset "**/*.php"
             }
+            steps {
+                sh '''
+                echo "Deploying PHP files to Apache..."
 
-            sh "sudo chown -R www-data:www-data /var/www/html/"
+                # Sync all project files to Apache
+                sudo rsync -av --delete ./ /var/www/html/
+
+                # Fix permissions
+                sudo chown -R www-data:www-data /var/www/html/
+                '''
+            }
         }
     }
-}
 
     post {
         success {
-            echo "CI/CD SUCCESS ✔ Deployed"
+            echo "CI/CD SUCCESS ✔ Deployment completed"
         }
         failure {
             echo "CI/CD FAILED ❌ Check logs"
+        }
+        always {
+            cleanWs()
         }
     }
 }
