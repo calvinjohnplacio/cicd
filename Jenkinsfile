@@ -68,24 +68,20 @@ pipeline {
             }
         }
 
-        stage('Deploy to Apache') {
-            when {
-                changeset "**/*.php"
-            }
-            steps {
-                sh '''
-                echo "Deploying PHP files to Apache..."
-
-                # Sync all project files to Apache
-                sudo rsync -av --delete ./ /var/www/html/
-
-                # Fix permissions
-                sudo chown -R www-data:www-data /var/www/html/
-                '''
-            }
-        }
+    stage('Deploy to Apache') {
+    when {
+        expression { return env.HAS_PHP_CHANGES == 'true' }
     }
+    steps {
+        sh '''
+        echo "Deploying PHP files to Apache..."
 
+        sudo rsync -av --delete ./ /var/www/html/
+
+        sudo chown -R www-data:www-data /var/www/html/
+        '''
+    }
+}
     post {
         success {
             echo "CI/CD SUCCESS ✔ Deployment completed"
