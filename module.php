@@ -1,5 +1,5 @@
 <?php 
 
-echo "Pogi si jison titum"
+echo "Pogi si jison titum";
 
 ?>
