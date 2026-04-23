@@ -3,65 +3,61 @@ pipeline {
 
     environment {
         GIT_REPO_URL = 'https://github.com/calvinjohnplacio/cicd.git'
-        GIT_CREDENTIALS_ID = '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'  // Correct credential ID
-        GIT_BRANCH = 'main'  // Explicitly setting branch to 'main'
+        GIT_CREDENTIALS_ID = 'github-pat'
+        GIT_BRANCH = 'main'
     }
 
     stages {
+
         stage('Checkout SCM') {
             steps {
-                script {
-                    // Checkout the correct branch (main)
-                    checkout scm: [
-                        $class: 'GitSCM',
-                        branches: [[name: "refs/heads/${env.GIT_BRANCH}"]],
-                        userRemoteConfigs: [[url: "${env.GIT_REPO_URL}", credentialsId: "${env.GIT_CREDENTIALS_ID}"]]
-                    ]
-                }
+                checkout scm: [
+                    $class: 'GitSCM',
+                    branches: [[name: "*/${env.GIT_BRANCH}"]],
+                    userRemoteConfigs: [[
+                        url: "${env.GIT_REPO_URL}",
+                        credentialsId: "${env.GIT_CREDENTIALS_ID}"
+                    ]]
+                ]
             }
         }
 
         stage('Setup Python Environment') {
             steps {
-                script {
-                    // Create and activate virtual environment
-                    sh '''
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
-                    '''
-                }
+                sh '''
+                echo "Setting up Python environment..."
+
+                python3 -m venv venv
+                . venv/bin/activate
+
+                pip install --upgrade pip
+                pip install -r requirements.txt
+                '''
             }
         }
 
         stage('Run Selenium Test') {
             steps {
-                script {
-                    // Activate the virtual environment and run the tests
-                    sh '''
-                    . venv/bin/activate
-                    python test.py
-                    '''
-                }
+                sh '''
+                echo "Running Selenium tests..."
+
+                . venv/bin/activate
+                python test.py
+                '''
             }
         }
 
-     stage('Deploy to Apache') {
-    steps {
-        script {
-            sh '''
-            echo "Deploying FULL PHP project to Apache..."
+        stage('Deploy to Apache') {
+            steps {
+                sh '''
+                echo "Deploying FULL PHP project to Apache..."
 
-            # Sync entire repo to Apache (includes new + modified + deleted files)
-            sudo rsync -av --delete ./ /var/www/html/
-
-            # Fix permissions
-            sudo chown -R www-data:www-data /var/www/html/
-            '''
+                sudo rsync -av --delete ./ /var/www/html/
+                sudo chown -R www-data:www-data /var/www/html/
+                '''
+            }
         }
     }
-}
 
     post {
         success {
@@ -69,6 +65,9 @@ pipeline {
         }
         failure {
             echo "CI/CD FAILED ❌ Check logs"
+        }
+        always {
+            cleanWs()
         }
     }
 }
