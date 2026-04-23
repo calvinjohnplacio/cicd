@@ -47,11 +47,7 @@ pipeline {
             }
         }
 
-<<<<<<< HEAD
-        stage('Deploy Changed PHP Files') {
-=======
      stage('Deploy Changed PHP Files') {
->>>>>>> 54ce08c (all files push)
     when {
         changeset "**/*.php"
     }
