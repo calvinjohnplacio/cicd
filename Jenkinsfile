@@ -47,19 +47,27 @@ pipeline {
             }
         }
 
-        stage('Deploy to Apache') {
-            steps {
-                script {
-                    // Deploy to Apache and handle permissions
-                    // Ensure that sudo is passwordless for Jenkins user in the sudoers file
-                    sh '''
-                    sudo cp index.html /var/www/html/index.html
-                    sudo chown www-data:www-data /var/www/html/index.html
-                    '''
-                }
+        stage('Deploy Changed PHP Files') {
+    when {
+        changeset "**/*.php"
+    }
+    steps {
+        script {
+            def changedFiles = sh(
+                script: "git diff --name-only HEAD~1 HEAD | grep '.php' || true",
+                returnStdout: true
+            ).trim()
+
+            for (file in changedFiles.split("\n")) {
+                sh """
+                sudo cp ${file} /var/www/html/${file}
+                """
             }
+
+            sh "sudo chown -R www-data:www-data /var/www/html/"
         }
     }
+}
 
     post {
         success {
