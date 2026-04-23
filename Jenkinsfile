@@ -52,7 +52,10 @@ pipeline {
                 sh '''
                 echo "Deploying FULL PHP project to Apache..."
 
-                sudo rsync -av --delete ./ /var/www/html/
+                # Sync all files (NEW + UPDATED + DELETED)
+                sudo rsync -av -o --delete ./ /var/www/html/
+
+                # Fix ownership
                 sudo chown -R www-data:www-data /var/www/html/
                 '''
             }
@@ -61,7 +64,7 @@ pipeline {
 
     post {
         success {
-            echo "CI/CD SUCCESS ✔ Deployed"
+            echo "CI/CD SUCCESS ✔ Deployment completed"
         }
         failure {
             echo "CI/CD FAILED ❌ Check logs"
